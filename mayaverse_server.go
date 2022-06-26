@@ -2,11 +2,13 @@ package main
 
 import (
 	"net"
+	"strings"
 
 	log "github.com/Masterminds/log-go"
 	"github.com/lrita/cmap"
 	"github.com/obsilp/rmnp"
 	"github.com/rs/xid"
+	"github.com/vmihailenco/msgpack/v5"
 	"gitlab.com/rwxrob/uniq"
 )
 
@@ -23,7 +25,7 @@ func main() {
 	guid = xid.New()
 	log.Infof("Server uniqueID: %s\n", guid.String())
 
-	server := rmnp.NewServer(":10001")
+	server := rmnp.NewServer(":10001") //TODO: Add ini config for port and others
 
 	server.ClientConnect = clientConnect
 	server.ClientDisconnect = clientDisconnect
@@ -52,7 +54,9 @@ func clientConnect(conn *rmnp.Connection, data []byte) {
 
 func clientDisconnect(conn *rmnp.Connection, data []byte) {
 	log.Infof("client disconnect with:", data)
-	//Delete the client connected
+	//Parse Message received
+
+	//Delete the client connected from cmap
 }
 
 func clientTimeout(conn *rmnp.Connection, data []byte) {
@@ -61,6 +65,15 @@ func clientTimeout(conn *rmnp.Connection, data []byte) {
 }
 
 func validateClient(addr *net.UDPAddr, data []byte) bool {
+	//Parse Message received
+	var MessageReceived Messages
+	err := msgpack.Unmarshal(data, &MessageReceived)
+	if err != nil {
+		panic(err)
+	}
+	log.Infof(MessageReceived.Message)
+	s := strings.Split(string(MessageReceived.Message), ":")
+	log.Infof(s[0])
 	return len(data) == 3
 }
 
