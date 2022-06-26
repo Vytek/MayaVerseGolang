@@ -1,9 +1,9 @@
 package main
 
 import (
-	"fmt"
 	"net"
 
+	log "github.com/Masterminds/log-go"
 	"github.com/lrita/cmap"
 	"github.com/obsilp/rmnp"
 	"github.com/rs/xid"
@@ -21,7 +21,7 @@ type Messages struct {
 func main() {
 	//Unique ID
 	guid = xid.New()
-	fmt.Printf("%s\n", guid.String())
+	log.Infof("Server uniqueID: %s\n", guid.String())
 
 	server := rmnp.NewServer(":10001")
 
@@ -32,13 +32,13 @@ func main() {
 	server.PacketHandler = handleServerPacket
 
 	server.Start()
-	fmt.Println("server started")
+	log.Infof("Server started")
 
 	select {}
 }
 
 func clientConnect(conn *rmnp.Connection, data []byte) {
-	fmt.Println("client connection with:", data)
+	log.Infof("client connection with:", data)
 
 	if data[0] != 0 {
 		conn.Disconnect([]byte("not allowed"))
@@ -49,12 +49,12 @@ func clientConnect(conn *rmnp.Connection, data []byte) {
 }
 
 func clientDisconnect(conn *rmnp.Connection, data []byte) {
-	fmt.Println("client disconnect with:", data)
+	log.Infof("client disconnect with:", data)
 	//Delete the client connected
 }
 
 func clientTimeout(conn *rmnp.Connection, data []byte) {
-	fmt.Println("client timeout with:", data)
+	log.Infof("client timeout with:", data)
 	//Delete the client Timeouted
 }
 
@@ -64,7 +64,7 @@ func validateClient(addr *net.UDPAddr, data []byte) bool {
 
 func handleServerPacket(conn *rmnp.Connection, data []byte, channel rmnp.Channel) {
 	str := string(data)
-	fmt.Println("'"+str+"'", "from", conn.Addr.String(), "on channel", channel)
+	log.Infof("'"+str+"'", "from", conn.Addr.String(), "on channel", channel)
 
 	if str == "ping" {
 		conn.SendReliableOrdered([]byte("pong"))

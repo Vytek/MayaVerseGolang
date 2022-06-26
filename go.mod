@@ -9,4 +9,7 @@ require (
 	gitlab.com/rwxrob/uniq v0.0.0-20200325203910-f771e6779384
 )
 
-require github.com/obsilp/rmnp v0.0.0-20181020095946-f937c1003aae
+require (
+	github.com/Masterminds/log-go v1.0.0
+	github.com/obsilp/rmnp v0.0.0-20181020095946-f937c1003aae
+)
