@@ -1,0 +1,7 @@
+title MayaVerse Client - Server Messages
+
+MayaVerse Client -> MayaVerse Server: ConnectWithData: MessagePack OpCode 0, Message lng:<login>:psw:<password>MayaVerse Client
+MayaVerse Server-->MayaVerse Server: ValidateClient: Check login exists and scrypt(<password>) is valid
+MayaVerse Server-->MayaVerse Client: Return OnConnection valid UniqueID: MessagePack OpCode 1, Message: cid:<uniqueid>
+MayaVerse Client-->MayaVerse Client: Parse incoming Message and store in memory UniqueID
+MayaVerse Client-->MayaVerse Server: DisconnectFromServer: MessagePack OpCode 2, Message: cld:<UniqueID>

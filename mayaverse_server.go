@@ -14,7 +14,7 @@ var guid xid.ID
 var n cmap.Map[string, *rmnp.Connection]
 
 type Messages struct {
-	OpCode  int
+	OpCode  byte
 	Message string
 }
 

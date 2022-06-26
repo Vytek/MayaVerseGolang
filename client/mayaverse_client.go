@@ -7,9 +7,11 @@ import (
 )
 
 type Messages struct {
-	OpCode  int
+	OpCode  byte
 	Message string
 }
+
+var ServerConnection *rmnp.Connection
 
 func main() {
 	client := rmnp.NewClient("127.0.0.1:10001")
@@ -27,6 +29,7 @@ func main() {
 func serverConnect(conn *rmnp.Connection, data []byte) {
 	fmt.Println("connected to server")
 	conn.SendReliableOrdered([]byte("ping"))
+	ServerConnection = conn
 }
 
 func serverDisconnect(conn *rmnp.Connection, data []byte) {
@@ -39,4 +42,8 @@ func serverTimeout(conn *rmnp.Connection, data []byte) {
 
 func handleClientPacket(conn *rmnp.Connection, data []byte, channel rmnp.Channel) {
 	fmt.Println("'"+string(data)+"'", "on channel", channel)
+}
+
+func SendMessage(Message string) {
+	ServerConnection.SendOnChannel(1, []byte(Message))
 }
