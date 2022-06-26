@@ -38,13 +38,15 @@ func main() {
 }
 
 func clientConnect(conn *rmnp.Connection, data []byte) {
-	log.Infof("client connection with:", data)
+	log.Infof("Client connection with:", data)
 
+	UniqueID := uniq.Hex(18)
 	if data[0] != 0 {
 		conn.Disconnect([]byte("not allowed"))
 	} else {
 		//Add new client connected
-		n.Store(uniq.Hex(18)+":"+conn.Addr.String(), conn)
+		n.Store(UniqueID+":"+conn.Addr.String(), conn)
+		conn.SendReliableOrdered([]byte(UniqueID + ":" + conn.Addr.String()))
 	}
 }
 
@@ -54,7 +56,7 @@ func clientDisconnect(conn *rmnp.Connection, data []byte) {
 }
 
 func clientTimeout(conn *rmnp.Connection, data []byte) {
-	log.Infof("client timeout with:", data)
+	log.Infof("Client timeout with:", data)
 	//Delete the client Timeouted
 }
 

@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/obsilp/rmnp"
+	"github.com/vmihailenco/msgpack/v5"
 )
 
 type Messages struct {
@@ -21,7 +22,11 @@ func main() {
 	client.ServerTimeout = serverTimeout
 	client.PacketHandler = handleClientPacket
 
-	client.ConnectWithData([]byte{0, 1, 2})
+	b, err := msgpack.Marshal(&Messages{OpCode: 0, Message: "lng:" + ""})
+	if err != nil {
+		panic(err)
+	}
+	client.ConnectWithData(b)
 
 	select {}
 }
