@@ -13,7 +13,7 @@ import (
 var guid xid.ID
 var n cmap.Map[string, *rmnp.Connection]
 
-type Message struct {
+type Messages struct {
 	OpCode  int
 	Message string
 }

@@ -6,6 +6,11 @@ import (
 	"github.com/obsilp/rmnp"
 )
 
+type Messages struct {
+	OpCode  int
+	Message string
+}
+
 func main() {
 	client := rmnp.NewClient("127.0.0.1:10001")
 
