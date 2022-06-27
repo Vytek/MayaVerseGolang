@@ -48,7 +48,12 @@ func clientConnect(conn *rmnp.Connection, data []byte) {
 	} else {
 		//Add new client connected
 		n.Store(UniqueID+":"+conn.Addr.String(), conn)
-		conn.SendReliableOrdered([]byte(UniqueID + ":" + conn.Addr.String()))
+		b, err := msgpack.Marshal(&Messages{OpCode: 1, Message: "cid:" + UniqueID + ":" + conn.Addr.String()})
+		if err != nil {
+			log.Errorf("Can't create MessagePack OpCode 1 Message")
+		} else {
+			conn.SendReliableOrdered(b)
+		}
 	}
 }
 
@@ -78,6 +83,15 @@ func clientDisconnect(conn *rmnp.Connection, data []byte) {
 func clientTimeout(conn *rmnp.Connection, data []byte) {
 	log.Infof("Client timeout with: %s\n", data)
 	//Delete the client Timeouted
+	var ClientToDelete string
+	n.Range(func(key string, value *rmnp.Connection) bool {
+		k, v := key, value
+		if v.Addr.String() == conn.Addr.String() {
+			ClientToDelete = k
+		}
+		return true
+	})
+	n.Delete(ClientToDelete)
 }
 
 func validateClient(addr *net.UDPAddr, data []byte) bool {
@@ -111,5 +125,15 @@ func handleServerPacket(conn *rmnp.Connection, data []byte, channel rmnp.Channel
 	if str == "ping" {
 		conn.SendReliableOrdered([]byte("pong"))
 		conn.Disconnect([]byte("session end"))
+		//Delete client disconnected from cmap
+		var ClientToDelete string
+		n.Range(func(key string, value *rmnp.Connection) bool {
+			k, v := key, value
+			if v.Addr.String() == conn.Addr.String() {
+				ClientToDelete = k
+			}
+			return true
+		})
+		n.Delete(ClientToDelete)
 	}
 }
