@@ -33,17 +33,17 @@ func main() {
 }
 
 func serverConnect(conn *rmnp.Connection, data []byte) {
-	fmt.Println("Connected to server with data:" + string(data))
+	fmt.Println("Connected to server with data: " + string(data))
 	conn.SendReliableOrdered([]byte("ping"))
 	ServerConnection = conn
 }
 
 func serverDisconnect(conn *rmnp.Connection, data []byte) {
-	fmt.Println("disconnected from server:", string(data))
+	fmt.Println("Disconnected from server: " + string(data))
 }
 
 func serverTimeout(conn *rmnp.Connection, data []byte) {
-	fmt.Println("server timeout")
+	fmt.Println("Server timeout")
 }
 
 func handleClientPacket(conn *rmnp.Connection, data []byte, channel rmnp.Channel) {
