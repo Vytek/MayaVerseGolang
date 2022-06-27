@@ -22,17 +22,18 @@ func main() {
 	client.ServerTimeout = serverTimeout
 	client.PacketHandler = handleClientPacket
 
-	b, err := msgpack.Marshal(&Messages{OpCode: 0, Message: "lng:" + ""})
+	b, err := msgpack.Marshal(&Messages{OpCode: 0, Message: "lng:" + "login"})
 	if err != nil {
 		panic(err)
+	} else {
+		client.ConnectWithData(b)
 	}
-	client.ConnectWithData(b)
 
 	select {}
 }
 
 func serverConnect(conn *rmnp.Connection, data []byte) {
-	fmt.Println("connected to server")
+	fmt.Println("Connected to server with data:" + string(data))
 	conn.SendReliableOrdered([]byte("ping"))
 	ServerConnection = conn
 }

@@ -40,7 +40,7 @@ func main() {
 }
 
 func clientConnect(conn *rmnp.Connection, data []byte) {
-	log.Infof("Client connection with:", data)
+	log.Infof("Client connection with: %s\n", data)
 
 	UniqueID := uniq.Hex(18)
 	if data[0] != 0 {
@@ -53,14 +53,30 @@ func clientConnect(conn *rmnp.Connection, data []byte) {
 }
 
 func clientDisconnect(conn *rmnp.Connection, data []byte) {
-	log.Infof("client disconnect with:", data)
+	log.Infof("Client disconnect with: %s\n", data)
 	//Parse Message received
-
-	//Delete the client connected from cmap
+	var MessageReceived Messages
+	err := msgpack.Unmarshal(data, &MessageReceived)
+	if err != nil {
+		log.Errorf("Error: %s\n", err)
+		return
+	}
+	log.Infof(MessageReceived.Message)
+	s := strings.Split(string(MessageReceived.Message), ":")
+	if MessageReceived.OpCode == 2 {
+		//Delete the client connected from cmap
+		if s[0] == "cld" {
+			n.Delete(s[1])
+		} else {
+			log.Errorf("Not cld in Message command")
+		}
+	} else {
+		log.Errorf("Not Opcode 2 in Message")
+	}
 }
 
 func clientTimeout(conn *rmnp.Connection, data []byte) {
-	log.Infof("Client timeout with:", data)
+	log.Infof("Client timeout with: %s\n", data)
 	//Delete the client Timeouted
 }
 
@@ -69,12 +85,23 @@ func validateClient(addr *net.UDPAddr, data []byte) bool {
 	var MessageReceived Messages
 	err := msgpack.Unmarshal(data, &MessageReceived)
 	if err != nil {
-		panic(err)
+		log.Errorf("Error: %s\n", err)
+		return false
 	}
 	log.Infof(MessageReceived.Message)
 	s := strings.Split(string(MessageReceived.Message), ":")
-	log.Infof(s[0])
-	return len(data) == 3
+	if MessageReceived.OpCode == 0 {
+		if s[0] == "lng" {
+			return true
+			//Check login and password using scrypt
+		} else {
+			log.Errorf("Not lng in Message command")
+			return false
+		}
+	} else {
+		log.Errorf("Not Opcode 1 in Message")
+		return false
+	}
 }
 
 func handleServerPacket(conn *rmnp.Connection, data []byte, channel rmnp.Channel) {
