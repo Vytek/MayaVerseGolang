@@ -34,6 +34,7 @@ func main() {
 
 func serverConnect(conn *rmnp.Connection, data []byte) {
 	fmt.Println("Connected to server with data: " + string(data))
+	//Parse OpCode 1
 	conn.SendReliableOrdered([]byte("ping"))
 	ServerConnection = conn
 }

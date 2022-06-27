@@ -122,6 +122,7 @@ func handleServerPacket(conn *rmnp.Connection, data []byte, channel rmnp.Channel
 	str := string(data)
 	log.Infof("'"+str+"'", "from", conn.Addr.String(), "on channel", channel)
 
+	//Parse MessagePack
 	if str == "ping" {
 		conn.SendReliableOrdered([]byte("pong"))
 		conn.Disconnect([]byte("session end"))

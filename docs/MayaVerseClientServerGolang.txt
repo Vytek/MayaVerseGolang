@@ -5,3 +5,7 @@ MayaVerse Server-->MayaVerse Server: ValidateClient: Check login exists and scry
 MayaVerse Server-->MayaVerse Client: Return OnConnection valid UniqueID: MessagePack OpCode 1, Message: cid:<uniqueid>
 MayaVerse Client-->MayaVerse Client: Parse incoming Message and store in memory UniqueID
 MayaVerse Client-->MayaVerse Server: DisconnectFromServer: MessagePack OpCode 2, Message: cld:<UniqueID>
+MayaVerse Client -> MayaVerse Server: DisconnectFromClient: MessagePack OpCode 3, Message: srd:<UniqueID>
+MayaVerse Client <-> MayaVerse Server: MessageTalkToServer: MessagePack OpCode 4, Message: msg:<Message>, Channel 0
+MayaVerse Client <-> MayaVerse Server: MessageTalkToAll: MessagePack OpCode 4, Message: msg:<Message>, Channel 1
+MayaVerse Client <-> MayaVerse Server: MessageTalkToOther: MessagePack OpCode 4, Message: msg:<Message>, Channel 2> 
