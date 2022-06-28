@@ -71,10 +71,11 @@ func clientDisconnect(conn *rmnp.Connection, data []byte) {
 		s := strings.Split(string(MessageReceived.Message), ":")
 		if MessageReceived.OpCode == 2 {
 			//Delete the client connected from cmap
-			if s[0] == "cld" {
-				n.Delete(s[1])
+			if s[0] == "dis" {
+				n.Delete(s[1] + ":" + s[2] + ":" + s[3])
+				log.Warnf("Client deleted: %s\n", s[1]+":"+s[2]+":"+s[3])
 			} else {
-				log.Errorf("Not cld in Message command")
+				log.Errorf("Not dis in Message command")
 			}
 		} else {
 			log.Errorf("Not Opcode 2 in Message")
@@ -83,7 +84,11 @@ func clientDisconnect(conn *rmnp.Connection, data []byte) {
 }
 
 func clientTimeout(conn *rmnp.Connection, data []byte) {
-	log.Infof("Client timeout with data: %s\n", data)
+	if len(data) == 0 {
+		log.Info("Client timeout")
+	} else {
+		log.Infof("Client timeout with data: %s\n", data)
+	}
 	//Delete the client Timeouted
 	var ClientToDelete string
 	n.Range(func(key string, value *rmnp.Connection) bool {
@@ -128,21 +133,33 @@ func handleServerPacket(conn *rmnp.Connection, data []byte, channel rmnp.Channel
 	log.Infof("'"+str+"'", "from", conn.Addr.String(), "on channel", channel)
 
 	//Parse MessagePack
-	if str == "ping" {
-		conn.SendReliableOrdered([]byte("pong"))
-		/*
-			conn.Disconnect([]byte("session end"))
-			//Delete client disconnected from cmap
-			var ClientToDelete string
-			n.Range(func(key string, value *rmnp.Connection) bool {
-				k, v := key, value
-				if v.Addr.String() == conn.Addr.String() {
-					ClientToDelete = k
-				}
-				return true
-			})
-			n.Delete(ClientToDelete)
-			log.Infof("Client deleted: %s\n", ClientToDelete)
-		*/
+	if len(data) != 0 {
+		//Parse Message received
+		var MessageReceived Messages
+		err := msgpack.Unmarshal(data, &MessageReceived)
+		if err != nil {
+			log.Infof("Error validateClient: %s\n", err)
+			return
+		}
+		log.Infof(MessageReceived.Message)
+		s := strings.Split(string(MessageReceived.Message), ":")
+		if MessageReceived.OpCode == 3 {
+			if s[0] == "ping" {
+				log.Infof("OK, ping in Message command\n")
+				conn.SendReliableOrdered(SendMessagePong())
+			} else {
+				log.Errorf("Not cid in Message command\n")
+			}
+		}
+		//Others OpCodes
+	}
+}
+
+func SendMessagePong() []byte {
+	b, err := msgpack.Marshal(&Messages{OpCode: 3, Message: "pong"})
+	if err != nil {
+		panic(err)
+	} else {
+		return b
 	}
 }

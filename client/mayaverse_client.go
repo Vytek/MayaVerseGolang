@@ -16,6 +16,7 @@ type Messages struct {
 
 var ServerConnection *rmnp.Connection
 var client *rmnp.Client
+var UniqueID string
 
 func main() {
 	client = rmnp.NewClient("127.0.0.1:10001")
@@ -52,7 +53,16 @@ func main() {
 		Name: "ping",
 		Help: "Ping server command",
 		Func: func(c *ishell.Context) {
-			SendMessage("ping")
+			SendMessagePing()
+			c.Println("Result:")
+		},
+	})
+
+	shell.AddCmd(&ishell.Cmd{
+		Name: "disc",
+		Help: "Disconnect from server command",
+		Func: func(c *ishell.Context) {
+			SendMessageDisconnect()
 			c.Println("Result:")
 		},
 	})
@@ -89,12 +99,54 @@ func serverTimeout(conn *rmnp.Connection, data []byte) {
 
 func handleClientPacket(conn *rmnp.Connection, data []byte, channel rmnp.Channel) {
 	fmt.Println("'"+string(data)+"'", "on channel", channel)
+	if len(data) != 0 {
+		//Parse Message received
+		var MessageReceived Messages
+		err := msgpack.Unmarshal(data, &MessageReceived)
+		if err != nil {
+			fmt.Printf("Error validateClient: %s\n", err)
+			return
+		}
+		fmt.Println(MessageReceived.Message)
+		s := strings.Split(string(MessageReceived.Message), ":")
+		if MessageReceived.OpCode == 1 {
+			if s[0] == "cid" {
+				fmt.Printf("OK, cid in Message command\n")
+				UniqueID = s[1] + ":" + s[2] + ":" + s[3]
+				fmt.Printf("Client UniqueID: %s\n", UniqueID)
+			} else {
+				fmt.Printf("Not cid in Message command\n")
+			}
+		}
+		if MessageReceived.OpCode == 3 {
+			if s[0] == "pong" {
+				fmt.Printf("OK, pong in Message command\n")
+			} else {
+				fmt.Printf("Not pong in Message command\n")
+			}
+		}
+		//Others OpCodes
+	}
 }
 
 func SendMessage(Message string) {
 	ServerConnection.SendOnChannel(1, []byte(Message))
 }
 
-func SendMessageDisconnect(Message string) {
-	ServerConnection.SendOnChannel(1, []byte(Message))
+func SendMessageDisconnect() {
+	b, err := msgpack.Marshal(&Messages{OpCode: 2, Message: "dis:" + UniqueID})
+	if err != nil {
+		panic(err)
+	} else {
+		ServerConnection.Disconnect(b)
+	}
+}
+
+func SendMessagePing() {
+	b, err := msgpack.Marshal(&Messages{OpCode: 3, Message: "ping"})
+	if err != nil {
+		panic(err)
+	} else {
+		ServerConnection.SendOnChannel(1, b)
+	}
 }
