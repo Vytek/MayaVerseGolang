@@ -56,30 +56,34 @@ func clientConnect(conn *rmnp.Connection, data []byte) {
 }
 
 func clientDisconnect(conn *rmnp.Connection, data []byte) {
-	log.Infof("Client disconnect with: %s\n", data)
-	//Parse Message received
-	var MessageReceived Messages
-	err := msgpack.Unmarshal(data, &MessageReceived)
-	if err != nil {
-		log.Errorf("Error clientDisconnect: %s\n", err)
-		return
-	}
-	log.Infof(MessageReceived.Message)
-	s := strings.Split(string(MessageReceived.Message), ":")
-	if MessageReceived.OpCode == 2 {
-		//Delete the client connected from cmap
-		if s[0] == "cld" {
-			n.Delete(s[1])
-		} else {
-			log.Errorf("Not cld in Message command")
-		}
+	if len(data) == 0 {
+		log.Infof("Client disconnect addr: %s\n", conn.Addr.String())
 	} else {
-		log.Errorf("Not Opcode 2 in Message")
+		log.Infof("Client disconnect with: %s\n", data)
+		//Parse Message received
+		var MessageReceived Messages
+		err := msgpack.Unmarshal(data, &MessageReceived)
+		if err != nil {
+			log.Errorf("Error clientDisconnect: %s\n", err)
+			return
+		}
+		log.Infof(MessageReceived.Message)
+		s := strings.Split(string(MessageReceived.Message), ":")
+		if MessageReceived.OpCode == 2 {
+			//Delete the client connected from cmap
+			if s[0] == "cld" {
+				n.Delete(s[1])
+			} else {
+				log.Errorf("Not cld in Message command")
+			}
+		} else {
+			log.Errorf("Not Opcode 2 in Message")
+		}
 	}
 }
 
 func clientTimeout(conn *rmnp.Connection, data []byte) {
-	log.Infof("Client timeout with: %s\n", data)
+	log.Infof("Client timeout with data: %s\n", data)
 	//Delete the client Timeouted
 	var ClientToDelete string
 	n.Range(func(key string, value *rmnp.Connection) bool {
@@ -90,6 +94,7 @@ func clientTimeout(conn *rmnp.Connection, data []byte) {
 		return true
 	})
 	n.Delete(ClientToDelete)
+	log.Warnf("Client deleted: %s\n", ClientToDelete)
 }
 
 func validateClient(addr *net.UDPAddr, data []byte) bool {
@@ -125,17 +130,19 @@ func handleServerPacket(conn *rmnp.Connection, data []byte, channel rmnp.Channel
 	//Parse MessagePack
 	if str == "ping" {
 		conn.SendReliableOrdered([]byte("pong"))
-		conn.Disconnect([]byte("session end"))
-		//Delete client disconnected from cmap
-		var ClientToDelete string
-		n.Range(func(key string, value *rmnp.Connection) bool {
-			k, v := key, value
-			if v.Addr.String() == conn.Addr.String() {
-				ClientToDelete = k
-			}
-			return true
-		})
-		n.Delete(ClientToDelete)
-		log.Infof("Client deleted: %s\n", ClientToDelete)
+		/*
+			conn.Disconnect([]byte("session end"))
+			//Delete client disconnected from cmap
+			var ClientToDelete string
+			n.Range(func(key string, value *rmnp.Connection) bool {
+				k, v := key, value
+				if v.Addr.String() == conn.Addr.String() {
+					ClientToDelete = k
+				}
+				return true
+			})
+			n.Delete(ClientToDelete)
+			log.Infof("Client deleted: %s\n", ClientToDelete)
+		*/
 	}
 }

@@ -15,9 +15,10 @@ type Messages struct {
 }
 
 var ServerConnection *rmnp.Connection
+var client *rmnp.Client
 
 func main() {
-	client := rmnp.NewClient("127.0.0.1:10001")
+	client = rmnp.NewClient("127.0.0.1:10001")
 
 	client.ServerConnect = serverConnect
 	client.ServerDisconnect = serverDisconnect
@@ -47,23 +48,43 @@ func main() {
 		},
 	})
 
+	shell.AddCmd(&ishell.Cmd{
+		Name: "ping",
+		Help: "Ping server command",
+		Func: func(c *ishell.Context) {
+			SendMessage("ping")
+			c.Println("Result:")
+		},
+	})
+
 	// run shell
 	shell.Run()
 }
 
 func serverConnect(conn *rmnp.Connection, data []byte) {
-	fmt.Println("Connected to server with data: " + string(data))
-	//Parse OpCode 1
-	conn.SendReliableOrdered([]byte("ping"))
+	if len(data) == 0 {
+		fmt.Println("Connected to server")
+	} else {
+		fmt.Printf("Connected to server with data: %s\n", data)
+	}
+	//conn.SendReliableOrdered([]byte("ping"))
 	ServerConnection = conn
 }
 
 func serverDisconnect(conn *rmnp.Connection, data []byte) {
-	fmt.Println("Disconnected from server: " + string(data))
+	if len(data) == 0 {
+		fmt.Println("Disconnected from server")
+	} else {
+		fmt.Printf("Disconnected from server with data: %s\n", data)
+	}
 }
 
 func serverTimeout(conn *rmnp.Connection, data []byte) {
-	fmt.Println("Server timeout")
+	if len(data) == 0 {
+		fmt.Println("Server timeout")
+	} else {
+		fmt.Printf("Server timeout with data: %s\n", data)
+	}
 }
 
 func handleClientPacket(conn *rmnp.Connection, data []byte, channel rmnp.Channel) {
@@ -71,5 +92,9 @@ func handleClientPacket(conn *rmnp.Connection, data []byte, channel rmnp.Channel
 }
 
 func SendMessage(Message string) {
+	ServerConnection.SendOnChannel(1, []byte(Message))
+}
+
+func SendMessageDisconnect(Message string) {
 	ServerConnection.SendOnChannel(1, []byte(Message))
 }
