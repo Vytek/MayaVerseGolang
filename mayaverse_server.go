@@ -43,17 +43,13 @@ func clientConnect(conn *rmnp.Connection, data []byte) {
 	log.Infof("Client connection with: %s\n", data)
 
 	UniqueID := uniq.Hex(18)
-	if data[0] != 0 {
-		conn.Disconnect([]byte("not allowed"))
+	//Add new client connected
+	n.Store(UniqueID+":"+conn.Addr.String(), conn)
+	b, err := msgpack.Marshal(&Messages{OpCode: 1, Message: "cid:" + UniqueID + ":" + conn.Addr.String()})
+	if err != nil {
+		log.Errorf("Can't create MessagePack OpCode 1 Message")
 	} else {
-		//Add new client connected
-		n.Store(UniqueID+":"+conn.Addr.String(), conn)
-		b, err := msgpack.Marshal(&Messages{OpCode: 1, Message: "cid:" + UniqueID + ":" + conn.Addr.String()})
-		if err != nil {
-			log.Errorf("Can't create MessagePack OpCode 1 Message")
-		} else {
-			conn.SendReliableOrdered(b)
-		}
+		conn.SendReliableOrdered(b)
 	}
 }
 
@@ -63,7 +59,7 @@ func clientDisconnect(conn *rmnp.Connection, data []byte) {
 	var MessageReceived Messages
 	err := msgpack.Unmarshal(data, &MessageReceived)
 	if err != nil {
-		log.Errorf("Error: %s\n", err)
+		log.Errorf("Error clientDisconnect: %s\n", err)
 		return
 	}
 	log.Infof(MessageReceived.Message)
@@ -99,15 +95,17 @@ func validateClient(addr *net.UDPAddr, data []byte) bool {
 	var MessageReceived Messages
 	err := msgpack.Unmarshal(data, &MessageReceived)
 	if err != nil {
-		log.Errorf("Error: %s\n", err)
+		log.Errorf("Error validateClient: %s\n", err)
 		return false
 	}
 	log.Infof(MessageReceived.Message)
 	s := strings.Split(string(MessageReceived.Message), ":")
 	if MessageReceived.OpCode == 0 {
 		if s[0] == "lng" {
+			log.Infof("OK, client validated!")
 			return true
 			//Check login and password using scrypt
+
 		} else {
 			log.Errorf("Not lng in Message command")
 			return false
@@ -136,5 +134,6 @@ func handleServerPacket(conn *rmnp.Connection, data []byte, channel rmnp.Channel
 			return true
 		})
 		n.Delete(ClientToDelete)
+		log.Infof("Client deleted: %s\n", ClientToDelete)
 	}
 }
