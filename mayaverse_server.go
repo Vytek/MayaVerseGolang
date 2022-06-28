@@ -41,6 +41,7 @@ func main() {
 
 func clientConnect(conn *rmnp.Connection, data []byte) {
 	log.Infof("Client connection with: %s\n", data)
+	//https://stackoverflow.com/questions/55959990/golang-print-string-as-an-array-of-bytes
 
 	UniqueID := uniq.Hex(18)
 	//Add new client connected
@@ -50,6 +51,7 @@ func clientConnect(conn *rmnp.Connection, data []byte) {
 		log.Errorf("Can't create MessagePack OpCode 1 Message")
 	} else {
 		conn.SendReliableOrdered(b)
+		log.Infof("Send OpCode 1 Message to Client")
 	}
 }
 
